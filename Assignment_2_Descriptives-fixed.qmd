@@ -1,0 +1,222 @@
+---
+title: "Assignment 2: Initial Findings Memo"
+author: "[Your Name Here]"
+format: 
+  pdf:
+    documentclass: article
+    fontfamily: Inter
+    fontsize: 11pt
+    margin-left: 1in
+    margin-right: 1in
+    margin-top: 1in
+    margin-bottom: 1in
+editor: visual
+---
+
+# Assignment 2: "The First Look"
+
+## Conceptual Focus
+
+This assignment covers **Chapter 13: Descriptive Statistics and Visualization**. Last week, we finished our "mise en place." Now, we need to find the "story" in the data. This is where we find the "wow" insights for the client. As your slides note, we will use two toolkits: \* **Descriptive Statistics:** Summarizing data with precision (e.g., `summary()`, `count()`). \* **Data Visualization:** Summarizing data with intuitive pictures (e.g., `ggplot2`).
+
+------------------------------------------------------------------------
+
+# Initial Insights Memo
+
+**To:** Alex Chen (Director of Insights)
+
+**From:** Noah Swingle
+
+**Subject:** Initial Insights for 2025 Digital Landscape Brief
+
+## Section 1: Sample Snapshot
+
+This part is two summaries. The first shows that there are pretty much the same number of republicans as democrats in the sample although there are slightly more democrats. There are also mroe people who didnt want to answer than were independent. The second shows that there is about 63% of White non-Hispanic in the population, with Black non-Hispanic in second place and Asian non-Hispanic has the least members.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-desc-cat"
+# This chunk runs the code from the appendix 
+# and displays ONLY the output tables.
+```
+
+## Section 2: Potential Client-Facing Insights
+
+This histogram shows a skewed distribution. Most people use 1 social media platform, but a lot of others also use two or more. There's a group that doesn't use any social media, but they are a much smaller number than people who use any at all.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-viz-hist"
+# This chunk displays the histogram.
+```
+
+There are pretty much the same number of democrats as republicans, although there are just a little more democrats. The number of independents and people who didn't want to answer is really small compared to the others.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-viz-bar"
+# This chunk displays the bar chart.
+```
+
+This shows that democrats are the most varied in the number of platforms they use and they have a higher average of platforms that they use. The other three categories are pretty much the same in average and the spread.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-viz-boxplot"
+# This chunk displays the boxplot.
+```
+
+Other/Mixed race non-Hispanic and Black non-Hispanic use TikTok the most. Even though White non-Hispanic is 63% of the sample, they use TikTok the least. So if the client wants to message Other/Mixed race non-Hispanic and Black non-Hispanic people, they should really consider using TikTok.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-viz-stackedbar"
+# This chunk displays the stacked bar chart.
+```
+
+The number of reasons for using Facebook really isnt all that different between republicans and democrats at 1 or 2. But more republicans had no reasons or 3 reasons than democrats. There are not many independents, so we cant say much about them.
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-viz-facet"
+# This chunk displays the faceted histogram.
+```
+
+\newpage
+
+# Appendix: R Code and Commentary
+
+## 1. Setup
+
+We're loading up tidyverse so we can do statistical manipulations. The second part is that we are loading the w144_wrangled Rdata file we made in Assingment 1.
+
+```{r}
+#| label: "chunk-setup"
+#| echo: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+load("w144_wrangled.RData") # Load data from Assignment 1
+```
+
+## 2. Descriptive Statistics (Categorical)
+
+Here the count() functions counts up how many times a value shows up in a varaible. The mutate() function creates a percent variable that calculates the party membership as a percentage of all our sample. This way we can see a lot better the makeup of our sample.
+
+```{r}
+#| label: "chunk-desc-cat"
+#| echo: true
+
+# Get frequencies for party_simple
+# Hint: Use count() on the 'party_simple' variable, then use mutate() to calculate the percent.
+w144_wrangled %>%
+  count(party_simple) %>%
+  mutate(percent = n / sum(n))
+
+# Get frequencies for f_racethnmod
+# Hint: Use count() on the 'f_racethnmod' variable, then use mutate() to calculate the percent.
+w144_wrangled %>%
+  count(f_racethnmod) %>%
+  mutate(percent = n / sum(n))
+```
+
+## 3. Descriptive Statistics (Numeric)
+
+So summary() gives us the quartiles (so, bottom 25%, top 25%), the mean which is the same thing as the average, the median and the minimum and maximum. The mean and median both tell about central tendency, but the mean is the average and can be really skewed if there are extreme values. The median is the value right in the middle of all the values and would be a better representation if there were extreme values.
+
+```{r}
+#| label: "chunk-desc-num"
+#| echo: true
+
+# Get summary for platform_count
+# Hint: Use summary() on the 'platform_count' variable.
+summary(w144_wrangled$platform_count) # Try summary(your_variable)
+
+# Get summary for fb_purpose_score
+# Hint: Use summary() on the 'fb_purpose_score' variable.
+summary(w144_wrangled$fb_purpose_score) # Try summary(your_variable)
+```
+
+## 4. Visualization (Single Numeric)
+
+This code makes a histogram to show how many social media platforms people use. GGplot starts the plot and aes tells R that platform_count is going to be on the x-axis. The geom command is to make a histogram, make the bin size 1, plus make the bars blue.
+
+```{r}
+#| label: "chunk-viz-hist"
+#| echo: true
+
+# Create a histogram of platform_count
+# Skeleton: Fill in the variable for x
+ggplot(w144_wrangled, aes(x = platform_count)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "Distribution of Platform Count", x = "Number of Platforms Used", y = "Count")
+```
+
+## 5. Visualization (Single Categorical)
+
+Just like with the histogram, the ggplot is going to set up a plot. In this case the variable for the x-axis is party_simple. geom is now \_bar instead of \_histogram because we are dealing with categories and want to see how many members are in each. This graph tells us at a glance how many people are in each party in the sample.
+
+```{r}
+#| label: "chunk-viz-bar"
+#| echo: true
+
+# Create a bar chart of party_simple
+# Skeleton: Fill in the variable for x
+ggplot(w144_wrangled, aes(x = party_simple)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of Political Affiliation", x = "Party", y = "Count")
+```
+
+## 6. Visualization (Numeric by Categorical)
+
+For this ggplot, we make a boxplot. This goes back to the quartiles, with the top and bottom of the box showing the top and bottom 25%, and the line in the middle of the box is the mean. The whiskers coming off the top and bottom show the max and min values. In this plot, democrats have a higher average of social media accounts, and are also spread out more than the other parties.
+
+```{r}
+#| label: "chunk-viz-boxplot"
+#| echo: true
+
+# Create a boxplot of platform_count by party_simple
+# Skeleton: Fill in the variables for x and y
+ggplot(w144_wrangled, aes(x = party_simple, y = platform_count)) +
+  geom_boxplot() +
+  labs(title = "Platform Use by Political Party", x = "Party", y = "Number of Platforms")
+```
+
+## 7. Visualization (Categorical by Categorical)
+
+This graph is a little confusing until you remember that people who didnt want to answer get a value of 99. So everybody who answered in one of the categories is on the left, while the "refuse to answer" people are on the right. To fix this, we need to exclude all the 99 answers too. I asked AI to help me out with that part of the code.
+
+```{r}
+#| label: "chunk-viz-stackedbar"
+#| echo: true
+
+w144_wrangled %>%
+  filter(!is.na(f_racethnmod) & f_racethnmod != 99,   
+         !is.na(uses_tiktok) & uses_tiktok != 99) %>% 
+  ggplot(aes(x = f_racethnmod, fill = as.factor(uses_tiktok))) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion of TikTok Use by Race/Ethnicity",
+       x = "Race/Ethnicity",
+       y = "Proportion",
+       fill = "Uses TikTok")
+
+```
+
+## 8. Visualization (Small Multiples)
+
+facet_wrap tells R to make a different histogram for each of the party_simple categories. This way we can see the distributions side by side of why people use facebook. If this was all one histogram, it might be very confusing to see hwo the different parties use faecbook.
+
+```{r}
+#| label: "chunk-viz-facet"
+#| echo: true
+
+# Create faceted histograms of fb_purpose_score by party_simple
+# Skeleton: Fill in the variable for x and the facet variable
+w144_wrangled %>%
+  filter(!is.na(fb_purpose_score) & !is.na(party_simple)) %>%
+  ggplot(aes(x = fb_purpose_score)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~ party_simple) +
+  labs(title = "Facebook 'Purpose' Score by Party", x = "FB Purpose Score", y = "Count")
+```

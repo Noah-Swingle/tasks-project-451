@@ -1,0 +1,187 @@
+---
+title: "Assignment 3: Statistical Findings Memo"
+author: "[Your Name Here]"
+format: 
+  pdf:
+    documentclass: article
+    fontfamily: Inter
+    fontsize: 11pt
+    margin-left: 1in
+    margin-right: 1in
+    margin-top: 1in
+    margin-bottom: 1in
+editor: visual
+---
+
+# Assignment 3: "The Leap"
+
+## Conceptual Focus
+
+This assignment covers **Chapter 14: Making Inferences**. In Week 13, we *described* our sample (e.g., "In our sample, Group A used more platforms"). Now, we must *verify* these findings. As your slides state, this is the "leap of faith" from our sample to the population.
+
+Our core question is: "Is the difference I see in my sample 'real'... or could it just be a fluke due to random chance?" We will use **Hypothesis Testing** (and p-values) to answer this, and we'll use the correct test for each job based on your **PowerPoint (Slide 23)**.
+
+------------------------------------------------------------------------
+
+# Statistical Findings Memo
+
+**To:** Alex Chen (Director of Insights)
+
+**From:** Noah Swingle
+
+**Subject:** Statistical Verification for 2025 Digital Landscape Brief
+
+This memo formally tests the key patterns identified in our descriptive analysis. The goal is to verify that these findings are statistically significant and not just a fluke of our sample before we present them to the client. All tests use an alpha level of $\alpha = .05$.
+
+## RQ 1: Association (TikTok & Politics)
+
+**Research Question:** Is there a significant *association* between political party (`party_simple`) and using TikTok (`uses_tiktok`)?
+
+**Hypotheses:** \* **H0 (Null):** There is no association between `party_simple` and `uses_tiktok` in the population. \* **HA (Alternative):** There is an association between `party_simple` and `uses_tiktok` in the population.
+
+**Results:** \[The `chisq.test` output will appear below.\]
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-test-chisq"
+# This chunk displays the Chi-Square test output
+```
+
+**Decision:** Based on the p-value of 0.000001228 that is a lot lower than our alpha of 0.05, we Reject H0
+
+**Conclusion:** The very low p-value tells us that it is extremely unlikely that the differences between political parties and TikTok use would happen by chance. So there is a good chance that party and TikTok use are associated.
+
+------------------------------------------------------------------------
+
+## RQ 2: Difference (Device Type)
+
+**Research Question:** Is there a significant *difference* in social media adoption (`platform_count`) between respondents who took the survey on a PC versus a Smartphone?
+
+**Hypotheses:** \* **H0 (Null):** The mean `platform_count` is the same for PC and Smartphone users in the population. \* **HA (Alternative):** The mean `platform_count` is different for PC and Smartphone users in the population.
+
+**Results:** \[The `t.test` output will appear below.\]
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-test-ttest"
+# This chunk displays the t-test output
+```
+
+**Decision:** The p-value of this test is 0.0000000055, which is a lot less than our alpha of 0.05, so we reject the H0 hypothesis.
+
+**Conclusion:** This data tells us that smartphone users are going to use more social media platforms than PC users will.
+
+------------------------------------------------------------------------
+
+## RQ 3: Difference (Party & Platform Count)
+
+**Research Question:** Is there a significant *difference* in the mean number of platforms used (`platform_count`) across our three `party_simple` groups?
+
+**Hypotheses:** \* **H0 (Null):** The mean `platform_count` is the same for all three `party_simple` groups in the population. \* **HA (Alternative):** At least one group's mean `platform_count` is different from the others.
+
+**Results (ANOVA):** \[The `aov` output will appear below.\]
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-test-anova"
+# This chunk displays the ANOVA test output
+```
+
+**Results (Post-Hoc Test):** \[The `TukeyHSD` output will appear below.\]
+
+```{r}
+#| echo: false
+#| ref.label: "chunk-test-tukey"
+# This chunk displays the TukeyHSD test output
+```
+
+**Decision:** This data tells us that there really is a difference in the number of social media platforms used depending on what political party you belong to, because the p-value here is 0.000271. That is below our alpha of 0.05, so we reject the null hypothesis. The Tukey test has a p-adjusted of 0.0002 between democrats and republicans, but also has values higher than alpha for the other combos. This tells us there is a real difference between democrats and republicans in the number of social media platforms.
+
+**Conclusion:** This data shows us that there is a significant difference in the number of social media platforms used between democrats and republicans, with democrats using more.
+
+------------------------------------------------------------------------
+
+## Final Discussion
+
+Together, this data tells us that there is a difference in TikTok use between political parties, a difference in the number of social media platforms between PC users and smartphone users, and that democrats have more social media accounts than republicans. So we might think that since both democrats and smartphone users have more platforms, social media might be a good way to reach them. We dont know that TikTok is the right way because the Chi Square didn't tell us who uses it more, only that there is a real difference.
+
+\newpage
+
+# Appendix: R Code and Commentary
+
+## 1. Setup
+
+These are the commands to load the tidyverse package which gives us data manipulation tools. It also loads the cleaned up data we have from the first assignment.
+
+```{r}
+#| label: "chunk-setup"
+#| echo: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+load("w144_wrangled.RData") # Load data from Assignment 1
+```
+
+## 2. RQ 1: Chi-Square Test
+
+Chi Square is the right test for this situation because it between two categorical variables- political party and TikTok use. For TikTok, you either use it or not. Political parties in our study were republican, democrat or independent.
+
+```{r}
+#| label: "chunk-test-chisq"
+#| echo: true
+
+# Create a contingency table
+# Skeleton: Use the table() function on your two categorical variables
+tiktok_party_table <- table(w144_wrangled$party_simple, w144_wrangled$uses_tiktok)
+
+# Run the test
+# Skeleton: Use the chisq.test() function on your table
+chisq.test(tiktok_party_table)
+```
+
+## 3. RQ 2: Independent Samples t-test
+
+\[Add your commentary. **Why is `t.test` the right test for RQ 2?** (Hint: Slide 23. What are the variable types? How many groups are we comparing?)\]
+
+The t-test is what we want to use here because we are comparing the differences between two groups- people who use PCs and those who use smartphones. What we are comparing is a number variable, the number of social media platforms people use.
+
+```{r}
+#| label: "chunk-test-ttest"
+#| echo: true
+
+# Filter the data to include only PC (1) and Smartphone (2) users
+device_data <- w144_wrangled %>%
+  filter(device_type_w144 == 1 | device_type_w144 == 2)
+
+# Run the t-test
+# Skeleton: Use t.test(numeric_var ~ categorical_var, data = ...)
+t.test(platform_count ~ device_type_w144, data = device_data)
+```
+
+## 4. RQ 3: ANOVA & TukeyHSD
+
+ANOVA is the right test here because we are comparing three or more groups. In this case, we are comparing democrats, republicans and independents by the number of social media platforms they use. A t-test wouldn't work because that is only good for two groups. Chi square wouldn't work either because that is only for categories. The problem with ANOVA is that it only tells you if there is a singficant difference, but not where the difference is. The Tukey test does that for us.
+
+```{r}
+#| label: "chunk-test-anova"
+#| echo: true
+#| results: "hide" 
+# Hide results here so they can be shown by the next chunk
+
+# Run the ANOVA
+# Skeleton: Use aov(numeric_var ~ categorical_var, data = ...)
+anova_model <- aov(platform_count ~ party_simple, data = w144_wrangled)
+
+# Get the summary table
+summary(anova_model)
+```
+
+```{r}
+#| label: "chunk-test-tukey"
+#| echo: true
+
+# Run the Post-Hoc Test
+# Skeleton: Use TukeyHSD() on your anova_model
+TukeyHSD(anova_model)
+```

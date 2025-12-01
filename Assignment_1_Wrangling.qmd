@@ -1,0 +1,148 @@
+---
+title: "Assignment 1: Data Wrangling Memo"
+author: "[Your Name Here]"
+format: 
+  pdf:
+    documentclass: article
+    fontfamily: Inter
+    fontsize: 11pt
+    margin-left: 1in
+    margin-right: 1in
+    margin-top: 1in
+    margin-bottom: 1in
+editor: visual
+---
+
+# Assignment 1: The Research "Mise en Place"
+
+## Conceptual Focus
+
+This assignment covers **Chapter 12: Data Wrangling**. As your slides note, this is the "mise en place" of research. Raw client data is messy. Our "Garbage in, garbage out" motto means we must create a clean, reliable, and reproducible workflow *before* any analysis can begin. Your R script is your "precise, shareable, and repeatable recipe" that ensures your work is transparent and accurate.
+
+------------------------------------------------------------------------
+
+# Data Prep Memo
+
+**To:** Alex Chen (Director of Insights)
+
+**From:** Noah Swingle
+
+**Subject:** Data Prep Memo for 2025 Digital Landscape Brief
+
+For this project, we cleaned the ATP_W144 data. First, we made simple yes/no variables for social media use (uses_facebook, uses_instagram, uses_tiktok, uses_x). They are 1 if a person uses that platform and 0 if not. This just makes it easier to see who uses what. Then we added them together into platform_count so we can tell how many platforms each person uses. The number can be 0 if they don’t use any, or 4 if they use all of them. We also made a variable called party_simple. It combines the person’s main party (f_party_final) and any party leaners (f_partyln_final) into three groups: “Republican,” “Democrat,” and “Independent/Other.” This makes it easier to look at political stuff without worrying about people who are kinda undecided. Anyone who refused to answer is NA so we can leave them out if we want. Even if someone is independent but leans one way, they get put in that party. Finally, we made an index called fb_purpose_score that counts how many reasons a person thinks Facebook is “very important” for. There are seven fbwhy questions, and each one is 1 if they said “very important.” In R, true counts as 1 and false counts as 0, so we can just add them together. The score goes from 0 to 7 and shows how many reasons someone cares about. These new variables make it way easier to work with the data and still keep the info useful for social media and political research.
+
+\newpage
+
+# Appendix: R Code and Commentary
+
+This appendix contains all R code used to import, clean, and transform the raw `ATP_W144_excerpt.csv` file into the analysis-ready `w144_wrangled.RData` file.
+
+## 1. Setup
+
+Tidyverse is the package loaded for data manipulation
+
+```{r}
+#| label: "chunk-setup"
+#| echo: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+```
+
+## 2. Importing
+
+Here we load the data into R and give it a new name so we dont corrupt the original
+
+```{r}
+#| label: "chunk-import"
+#| echo: true
+
+# Use read_csv() to load the dataset
+w144_raw <- read_csv("ATP_W144_excerpt.csv")
+```
+
+## 3. Transforming: Binary Platform Use
+
+we change the 1/2/99 to 1/0 so we can have only yes and no answers. The if_else statement looks to see if the variable is true. if so, it gets changes to "uses_facebook" or whatever social media. If its anything else, it gives back 0 w144and keeps going.
+
+```{r}
+
+w144_wrangled <- w144_raw %>%
+  mutate(
+    uses_facebook = if_else(smuse_a_w144 == 1, 1, 0),
+    uses_instagram = if_else(smuse_c_w144 == 1, 1, 0),
+    uses_tiktok = if_else(smuse_d_w144 == 1, 1, 0),
+    uses_x = if_else(smuse_i_w144 == 1, 1, 0)
+  )
+```
+
+## 4. Transforming: Composite Scale (platform_count)
+
+If we use 1 for true and 0 for false, then adding up the values for each of the variables as numbers will give how many socail media platforms each person uses.
+
+```{r}
+#| label: "chunk-transform-platform-count"
+#| echo: true
+
+w144_wrangled <- w144_wrangled %>%
+    mutate(   platform_count = (uses_facebook) +
+            (uses_x) +
+            (uses_instagram) +
+            (uses_tiktok))
+```
+
+## 5. Transforming: Categorical (party_simple)
+
+By combining `f_party` and `f_partyln` we can narrow down two variables to one variable with three different choices. that will make political analysis much easier. It also give NA for anybody who refused to answer, so those responses can be thrown out if needed. The case_when is asking if either the f_party_final or f_partyln_final are true for a number value. if so then party_simple gets the word value.
+
+```{r}
+#| label: "chunk-transform-party"
+#| echo: true
+
+
+
+w144_wrangled <- w144_wrangled %>%
+  mutate(
+    party_simple = case_when(
+      f_party_final == 1 | f_partyln_final == 1 ~ "Republican",
+       f_party_final == 2 | f_partyln_final == 2 ~ "Democrat",
+       f_party_final == 3 | f_partyln_final == 4 ~ "Independent/Other",
+      TRUE ~ NA_character_ # This line ensures any un-matched cases become NA
+    )
+  )
+
+```
+
+## 6. Transforming: Index Score (fb_purpose_score)
+
+For this index, we’re basically counting how many reasons a person said were “very important” for why they use Facebook. Each of the fbwhy variables uses the number 1 to mean “very important,” so all we have to do is check whether each item equals 1. So if we add up seven of these TRUE/FALSE checks, we end up with the total number of reasons a person rated as very important. The score can go from 0 (none of the reasons were very important) up to 7 (all of them were). That’s why we’re able to just add the comparisons together to make this index.\
+
+```{r}
+#| label: "chunk-transform-fb-score"
+#| echo: true
+
+
+w144_wrangled <- w144_wrangled %>%
+  mutate(
+    fb_purpose_score = (fbwhy_a_w144 == 1) +
+      (fbwhy_b_w144 == 1) +
+      (fbwhy_c_w144 == 1) +
+      (fbwhy_d_w144 == 1) +
+      (fbwhy_e_w144 == 1) +
+      (fbwhy_f_w144 == 1) +
+      (fbwhy_g_w144 == 1)
+  )
+```
+
+## 7. Exporting
+
+Saving in Rdata means that a lot of the stuff unique for R gets saved. Saving as a CSV might strip that out.
+
+```{r}
+#| label: "chunk-export"
+#| echo: true
+
+# Save the final wrangled data
+save(w144_wrangled, file = "w144_wrangled.RData")
+```
